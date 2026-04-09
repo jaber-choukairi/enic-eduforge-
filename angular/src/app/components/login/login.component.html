@@ -1,0 +1,118 @@
+<div class="login-page">
+  <div class="login-brand">
+    <div class="brand-logo">ENIC<span class="accent">.</span>Connect</div>
+    <div class="brand-tagline">La plateforme académique intelligente<br>de l'École Nationale d'Ingénieurs de Carthage</div>
+    <div class="features">
+      <div class="feature"><span class="dot"></span>Analyse prédictive du risque académique</div>
+      <div class="feature"><span class="dot"></span>Gestion complète des notes et ressources</div>
+      <div class="feature"><span class="dot"></span>Suivi en temps réel professeurs–étudiants</div>
+      <div class="feature"><span class="dot"></span>Événements et clubs académiques</div>
+    </div>
+  </div>
+
+  <div class="login-box">
+    <div class="login-title">Bienvenue 👋</div>
+    <div class="login-sub">Connectez-vous à votre espace académique</div>
+
+    <div class="tabs">
+      <button [class.active]="tab==='login'" (click)="tab='login'; error=''; success=''">Connexion</button>
+      <button [class.active]="tab==='register'" (click)="tab='register'; error=''; success=''">Inscription</button>
+    </div>
+
+    <!-- LOGIN TAB -->
+    <div *ngIf="tab==='login'">
+      <div class="field">
+        <label>Email institutionnel</label>
+        <input type="email" [(ngModel)]="login.email" placeholder="prenom.nom&#64;enic.edu.tn" (keyup.enter)="doLogin()"/>
+      </div>
+      <div class="field">
+        <label>Mot de passe</label>
+        <input type="password" [(ngModel)]="login.password" placeholder="••••••••" (keyup.enter)="doLogin()"/>
+      </div>
+      <button class="btn-primary" style="width:100%;justify-content:center" (click)="doLogin()" [disabled]="loading">
+        <div class="spinner" *ngIf="loading" style="width:14px;height:14px;border-width:2px;border-top-color:#080c14"></div>
+        {{ loading ? 'Connexion...' : 'Se connecter' }}
+      </button>
+      <div class="hint">
+        Démo Étudiant: ahmed.ben&#64;enic.edu.tn &middot; Professeur: mehdi.cherif&#64;enic.edu.tn<br>
+        Mot de passe: <strong>demo123</strong>
+      </div>
+    </div>
+
+    <!-- REGISTER TAB -->
+    <div *ngIf="tab==='register'">
+      <div class="row2">
+        <div class="field"><label>Prénom <span style="color:var(--danger)">*</span></label><input type="text" [(ngModel)]="reg.firstName" placeholder="Ahmed"/></div>
+        <div class="field"><label>Nom <span style="color:var(--danger)">*</span></label><input type="text" [(ngModel)]="reg.lastName" placeholder="Ben Salem"/></div>
+      </div>
+      <div class="field">
+        <label>Email <span style="color:var(--danger)">*</span></label>
+        <input type="email" [(ngModel)]="reg.email" placeholder="prenom.nom&#64;enic.edu.tn"/>
+      </div>
+      <div class="field">
+        <label>Mot de passe <span style="color:var(--danger)">*</span></label>
+        <input type="password" [(ngModel)]="reg.password" placeholder="Min. 6 caractères"/>
+      </div>
+      <div class="field">
+        <label>Rôle <span style="color:var(--danger)">*</span></label>
+        <select [(ngModel)]="reg.role">
+          <option value="STUDENT">🎓 Étudiant</option>
+          <option value="PROFESSOR">👨‍🏫 Professeur</option>
+          <option value="CHAIR">🏛️ Chair de Club</option>
+        </select>
+      </div>
+
+      <!-- Student fields -->
+      <ng-container *ngIf="reg.role==='STUDENT'">
+        <div class="row2">
+          <div class="field">
+            <label>Spécialité <span style="color:var(--danger)">*</span></label>
+            <select [(ngModel)]="reg.specialtyId">
+              <option *ngFor="let s of specialties" [value]="s.id">{{ s.name }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>Niveau <span style="color:var(--danger)">*</span></label>
+            <select [(ngModel)]="reg.academicLevel">
+              <option>L1</option><option>L2</option><option>L3</option><option>M1</option><option>M2</option>
+            </select>
+          </div>
+        </div>
+        <div class="row2">
+          <div class="field">
+            <label>Groupe</label>
+            <input type="text" [(ngModel)]="reg.groupName" placeholder="Ex: IA3-A"/>
+          </div>
+          <div class="field">
+            <label>Semestre actuel</label>
+            <input type="number" [(ngModel)]="reg.currentSemester" min="1" max="10"/>
+          </div>
+        </div>
+        <div class="field">
+          <label>Année d'inscription</label>
+          <input type="number" [(ngModel)]="reg.enrollmentYear" min="2000" max="2030"/>
+        </div>
+      </ng-container>
+
+      <!-- Professor / Chair fields -->
+      <ng-container *ngIf="reg.role!=='STUDENT'">
+        <div class="field">
+          <label>Département <span style="color:var(--danger)">*</span></label>
+          <input type="text" [(ngModel)]="reg.department" placeholder="Ex: Intelligence Artificielle"/>
+        </div>
+        <div class="field">
+          <label>Email bureau (optionnel)</label>
+          <input type="email" [(ngModel)]="reg.officeEmail" placeholder="bureau&#64;enic.edu.tn"/>
+        </div>
+      </ng-container>
+
+      <button class="btn-primary" style="width:100%;justify-content:center;margin-top:8px" (click)="doRegister()" [disabled]="loading">
+        <div class="spinner" *ngIf="loading" style="width:14px;height:14px;border-width:2px;border-top-color:#080c14"></div>
+        {{ loading ? 'Création...' : 'Créer mon compte' }}
+      </button>
+    </div>
+
+    <div class="error" *ngIf="error">{{ error }}</div>
+    <div class="success" *ngIf="success">{{ success }}</div>
+  </div>
+</div>
