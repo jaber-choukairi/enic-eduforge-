@@ -1,0 +1,133 @@
+<div class="cs-wrap">
+
+  <!-- HEADER -->
+  <div class="cs-header">
+    <div>
+      <h1 class="cs-title">Espace Carrière</h1>
+      <p class="cs-sub">Skill Gap · Stages · Mentorat</p>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="cs-tabs">
+    <button class="cs-tab" [class.active]="activeTab==='skillgap'"  (click)="setTab('skillgap')">Skill Gap</button>
+    <button class="cs-tab" [class.active]="activeTab==='stages'"    (click)="setTab('stages')">Stages</button>
+    <button class="cs-tab" [class.active]="activeTab==='mentorat'"  (click)="setTab('mentorat')">Mentorat</button>
+  </div>
+
+  <!-- ── SKILL GAP TAB ─────────────────────────────────────────────────── -->
+  <div class="cs-content" *ngIf="activeTab==='skillgap'">
+    <div class="cs-grid">
+
+      <!-- Left: skill bars -->
+      <div class="cs-card skill-card">
+        <div class="skill-card-header">
+          <h2 class="skill-card-title">Analyse des Compétences</h2>
+          <span class="specialty-badge">
+            <span class="specialty-dot"></span>{{ specialty }}
+          </span>
+        </div>
+        <div class="skill-legend">
+          <span class="legend-item current">Niveau actuel</span>
+          <span class="legend-item required">Requis pour objectif</span>
+        </div>
+        <div class="skill-list">
+          <div class="skill-row" *ngFor="let s of skills">
+            <div class="skill-name">{{ s.name }}</div>
+            <div class="skill-bars">
+              <div class="bar-track">
+                <div class="bar-fill required-fill" [style.width]="s.required + '%'"></div>
+                <div class="bar-fill current-fill"
+                     [style.width]="s.current + '%'"
+                     [style.background]="getBarColor(s.current, s.required)"></div>
+              </div>
+            </div>
+            <div class="skill-values">
+              <span [style.color]="getBarColor(s.current, s.required)">{{ s.current }}%</span>
+              <span class="skill-sep">/</span>
+              <span class="skill-req">{{ s.required }}%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: compatibility + action plan -->
+      <div class="cs-side">
+        <div class="cs-card compat-card">
+          <div class="compat-label">SCORE DE COMPATIBILITÉ</div>
+          <div class="compat-score">
+            <span class="compat-num">{{ compatibility }}</span>
+            <span class="compat-pct">%</span>
+          </div>
+          <div class="compat-desc">Compatibilité {{ objective }}</div>
+        </div>
+
+        <div class="cs-card action-card">
+          <div class="action-label">PLAN D'ACTION IA</div>
+          <div class="action-list">
+            <div class="action-item" *ngFor="let a of actionPlan">
+              <span class="action-dot" [style.background]="a.color"></span>
+              <span class="action-text">{{ a.label }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── STAGES TAB ─────────────────────────────────────────────────────── -->
+  <div class="cs-content" *ngIf="activeTab==='stages'">
+    <div class="stages-grid">
+      <div class="stage-card" *ngFor="let s of stages">
+        <div class="stage-top">
+          <div class="stage-company-wrap">
+            <div class="stage-initials">{{ s.company[0] }}</div>
+            <div>
+              <div class="stage-company">{{ s.company }}</div>
+              <div class="stage-location">{{ s.location }}</div>
+            </div>
+          </div>
+          <div class="stage-match" [style.color]="getMatchColor(s.match)">
+            {{ s.match }}%
+            <span class="stage-match-label">match</span>
+          </div>
+        </div>
+        <div class="stage-role">{{ s.role }}</div>
+        <div class="stage-meta">
+          <span class="stage-badge type">{{ s.type }}</span>
+          <span class="stage-badge duration">{{ s.duration }}</span>
+        </div>
+        <div class="stage-tags">
+          <span class="stage-tag" *ngFor="let t of s.tags">{{ t }}</span>
+        </div>
+        <button class="stage-apply-btn">Postuler →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── MENTORAT TAB ───────────────────────────────────────────────────── -->
+  <div class="cs-content" *ngIf="activeTab==='mentorat'">
+    <div class="mentors-grid">
+      <div class="mentor-card" *ngFor="let m of mentors">
+        <div class="mentor-top">
+          <div class="mentor-avatar" [style.background]="m.color + '22'" [style.border-color]="m.color + '55'">
+            <span [style.color]="m.color">{{ m.initials }}</span>
+          </div>
+          <div class="mentor-avail" [class.available]="m.available">
+            {{ m.available ? 'Disponible' : 'Occupé' }}
+          </div>
+        </div>
+        <div class="mentor-name">{{ m.name }}</div>
+        <div class="mentor-role">{{ m.role }} · {{ m.company }}</div>
+        <div class="mentor-expertise">
+          <span class="mentor-tag" *ngFor="let e of m.expertise">{{ e }}</span>
+        </div>
+        <button class="mentor-btn" [disabled]="!m.available" [class.disabled]="!m.available">
+          {{ m.available ? 'Contacter' : 'Indisponible' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+</div>

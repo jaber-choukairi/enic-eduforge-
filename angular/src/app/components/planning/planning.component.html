@@ -1,0 +1,188 @@
+<div class="planning-root">
+
+  <!-- ── Loading ── -->
+  <div class="sp-loading" *ngIf="loading">
+    <div class="sp-spinner"></div>
+    <span>Chargement du planning…</span>
+  </div>
+
+  <!-- ── Error ── -->
+  <div class="sp-error" *ngIf="error && !loading">
+    <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4M12 16h.01"/></svg>
+    {{ error }}
+  </div>
+
+  <!-- ── Main ── -->
+  <ng-container *ngIf="!loading && !error">
+
+    <!-- Top bar -->
+    <div class="sp-topbar">
+      <div class="sp-topbar-left">
+        <h1 class="sp-title">Smart Planning</h1>
+        <p class="sp-subtitle">Révisions · Auto-learning · Workshops</p>
+      </div>
+      <button class="sp-add-btn" (click)="openAddModal()">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+        + Ajouter
+      </button>
+    </div>
+
+    <!-- Calendar card -->
+    <div class="sp-calendar-card">
+      <!-- Week header -->
+      <div class="sp-week-header">
+        <div class="sp-week-nav">
+          <button class="sp-nav-btn" (click)="prevWeek()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <span class="sp-week-label">{{ weekRangeLabel }}</span>
+          <button class="sp-nav-btn" (click)="nextWeek()">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Grid -->
+      <div class="sp-grid">
+        <!-- Day headers -->
+        <div class="sp-grid-corner"></div>
+        <div class="sp-day-head" *ngFor="let day of weekDays; let i = index">
+          <span class="sp-day-name">{{ dayLabels[i] }}</span>
+          <span class="sp-day-num">{{ day.getDate() }}</span>
+        </div>
+
+        <!-- Hour rows -->
+        <ng-container *ngFor="let hour of hours">
+          <div class="sp-hour-label">{{ hour }}h</div>
+          <div class="sp-cell"
+               *ngFor="let day of weekDays; let di = index"
+               (click)="openAddModal(di, hour)">
+            <div class="sp-slot"
+                 *ngFor="let slot of getSlotsForCell(di, hour)"
+                 [style.background]="slot.color"
+                 [style.height]="slotHeightPx(slot.duration)"
+                 (click)="$event.stopPropagation()">
+              <div class="sp-slot-type">{{ typeLabel(slot.type) }}</div>
+              <div class="sp-slot-name">{{ slot.subjectName }}</div>
+              <div class="sp-slot-loc" *ngIf="slot.location">{{ slot.location }}</div>
+              <button class="sp-slot-del" (click)="removeSlot(slot.id); $event.stopPropagation()" title="Supprimer">×</button>
+            </div>
+          </div>
+        </ng-container>
+      </div>
+    </div>
+
+    <!-- Bottom info cards -->
+    <div class="sp-info-row">
+
+      <!-- AI suggestion -->
+      <div class="sp-info-card">
+        <div class="sp-info-label">IA SUGGÈRE</div>
+        <div class="sp-info-title">
+          <span class="sp-icon">📊</span> {{ aiSuggestion }}
+        </div>
+        <p class="sp-info-body">
+          Planifiez 2h de révision supplémentaire pour optimiser vos résultats.
+        </p>
+        <button class="sp-cta-btn" (click)="openAddModal()">Ajouter au planning</button>
+      </div>
+
+      <!-- Next deadline -->
+      <div class="sp-info-card">
+        <div class="sp-info-label">PROCHAINE SÉANCE</div>
+        <div class="sp-info-title">
+          <span class="sp-icon">📅</span>
+          <ng-container *ngIf="nextExam">{{ nextExam.subjectName }}</ng-container>
+          <ng-container *ngIf="!nextExam">Aucun examen prévu</ng-container>
+        </div>
+        <p class="sp-info-accent" *ngIf="nextExam">
+          {{ dayLabels[nextExam.day] }} à {{ nextExam.hour }}h
+        </p>
+        <p class="sp-info-body" *ngIf="nextExam">
+          L'IA recommande de commencer la révision maintenant pour maximiser vos chances.
+        </p>
+        <p class="sp-info-body" *ngIf="!nextExam">
+          Ajoutez un créneau de révision ou d'examen pour suivre vos échéances.
+        </p>
+      </div>
+
+      <!-- Weekly load -->
+      <div class="sp-info-card">
+        <div class="sp-info-label">CHARGE HEBDO</div>
+        <div class="sp-info-val">{{ totalHoursThisWeek }}<span class="sp-info-unit">h</span></div>
+        <p class="sp-info-body" style="margin-bottom: 10px">Charge optimale : 20–35h</p>
+        <div class="sp-prog-bar">
+          <div class="sp-prog-fill" [style.width.%]="Math.min(100, totalHoursThisWeek / 35 * 100)"></div>
+        </div>
+        <div class="sp-zone-label">
+          <span class="sp-zone-dot"
+            [class.green]="totalHoursThisWeek <= 35"
+            [class.amber]="totalHoursThisWeek > 35 && totalHoursThisWeek <= 45"
+            [class.red]="totalHoursThisWeek > 45"></span>
+          <span>{{ totalHoursThisWeek <= 35 ? 'Zone confortable' : totalHoursThisWeek <= 45 ? 'Zone modérée' : 'Surcharge' }}</span>
+        </div>
+
+        <!-- Subject legend -->
+        <div class="sp-legend">
+          <div class="sp-legend-item" *ngFor="let subj of subjects.slice(0, 5); let i = index">
+            <span class="sp-legend-dot" [style.background]="subjectColorFor(subj.id)"></span>
+            <span class="sp-legend-name">{{ subj.name }}</span>
+            <span class="sp-legend-cr">{{ subj.credits }}cr</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </ng-container>
+
+  <!-- ── Add Slot Modal ── -->
+  <div class="sp-modal-overlay" *ngIf="showModal" (click)="closeModal()">
+    <div class="sp-modal" (click)="$event.stopPropagation()">
+      <div class="sp-modal-header">
+        <span class="sp-modal-title">Ajouter une séance</span>
+        <button class="sp-modal-close" (click)="closeModal()">×</button>
+      </div>
+
+      <div class="sp-form-grid">
+        <label class="sp-label">Matière</label>
+        <select class="sp-select" [(ngModel)]="editSlot.subjectId">
+          <option *ngFor="let s of subjects" [value]="s.id">{{ s.name }} ({{ s.credits }} cr)</option>
+        </select>
+
+        <label class="sp-label">Type</label>
+        <div class="sp-type-row">
+          <button class="sp-type-btn"
+            *ngFor="let t of slotTypes"
+            [class.active]="editSlot.type === t"
+            (click)="editSlot.type = t">{{ typeLabel(t) }}</button>
+        </div>
+
+        <label class="sp-label">Jour</label>
+        <select class="sp-select" [(ngModel)]="editSlot.day">
+          <option *ngFor="let d of dayLabels; let i = index" [value]="i">{{ d }} {{ weekDays[i]?.getDate() }}</option>
+        </select>
+
+        <label class="sp-label">Heure de début</label>
+        <select class="sp-select" [(ngModel)]="editSlot.hour">
+          <option *ngFor="let h of hours" [value]="h">{{ h }}h00</option>
+        </select>
+
+        <label class="sp-label">Durée (h)</label>
+        <select class="sp-select" [(ngModel)]="editSlot.duration">
+          <option [value]="1">1h</option>
+          <option [value]="2">2h</option>
+          <option [value]="3">3h</option>
+        </select>
+
+        <label class="sp-label">Salle / Lieu</label>
+        <input class="sp-input" type="text" placeholder="ex: Amphi A, Salle 12…" [(ngModel)]="editSlot.location" />
+      </div>
+
+      <div class="sp-modal-actions">
+        <button class="sp-modal-cancel" (click)="closeModal()">Annuler</button>
+        <button class="sp-modal-save" (click)="saveSlot()">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+
+</div>
