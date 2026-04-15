@@ -1,0 +1,503 @@
+// ── Design tokens ─────────────────────────────────────────────────────────
+$bg-base:    #0f1117;
+$bg-card:    #161b27;
+$bg-card2:   #1a2133;
+$border:     rgba(255,255,255,0.07);
+$accent:     #c6f135;
+$teal:       #4dd9ac;
+$text-1:     #e8edf5;
+$text-2:     #8899b0;
+$text-3:     #4a5f7a;
+$radius:     14px;
+$radius-sm:  8px;
+
+// ── Root ──────────────────────────────────────────────────────────────────
+.planning-root {
+  min-height: 100vh;
+  background: $bg-base;
+  padding: 32px 36px;
+  font-family: 'Inter', 'Segoe UI', sans-serif;
+  color: $text-1;
+  position: relative;
+}
+
+// ── Loading / Error ────────────────────────────────────────────────────────
+.sp-loading {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: $text-2;
+  font-size: 14px;
+  padding: 80px 0;
+  justify-content: center;
+}
+.sp-spinner {
+  width: 22px; height: 22px;
+  border: 2px solid $border;
+  border-top-color: $accent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.sp-error {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.3);
+  color: #f87171;
+  border-radius: $radius-sm;
+  padding: 14px 18px;
+  font-size: 14px;
+  margin-bottom: 24px;
+}
+
+// ── Top bar ────────────────────────────────────────────────────────────────
+.sp-topbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 28px;
+}
+.sp-title {
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  color: $text-1;
+  margin: 0 0 4px;
+}
+.sp-subtitle {
+  font-size: 13px;
+  color: $text-2;
+  margin: 0;
+  letter-spacing: 0.3px;
+}
+.sp-add-btn {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  background: $accent;
+  color: #0f1117;
+  border: none;
+  border-radius: 22px;
+  padding: 10px 20px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.15s;
+  &:hover { opacity: 0.88; transform: translateY(-1px); }
+}
+
+// ── Calendar card ──────────────────────────────────────────────────────────
+.sp-calendar-card {
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 24px;
+  margin-bottom: 24px;
+  overflow-x: auto;
+}
+
+.sp-week-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.sp-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.sp-week-label {
+  font-size: 17px;
+  font-weight: 700;
+  color: $text-1;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+}
+.sp-nav-btn {
+  width: 30px; height: 30px;
+  display: flex; align-items: center; justify-content: center;
+  background: $bg-card2;
+  border: 1px solid $border;
+  border-radius: 8px;
+  color: $text-2;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  &:hover { background: rgba(255,255,255,0.08); color: $text-1; }
+}
+
+// ── Grid ──────────────────────────────────────────────────────────────────
+.sp-grid {
+  display: grid;
+  grid-template-columns: 46px repeat(7, 1fr);
+  gap: 0;
+  min-width: 720px;
+}
+
+.sp-grid-corner {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.sp-day-head {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 6px 4px 10px;
+  border-bottom: 1px solid $border;
+  gap: 3px;
+
+  .sp-day-name {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    color: $text-2;
+  }
+  .sp-day-num {
+    font-size: 13px;
+    font-weight: 700;
+    color: $text-1;
+  }
+}
+
+.sp-hour-label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 6px 8px 0 0;
+  font-size: 11px;
+  color: $text-3;
+  font-weight: 500;
+  height: 60px;
+  border-top: 1px solid $border;
+}
+
+.sp-cell {
+  height: 60px;
+  border-top: 1px solid $border;
+  border-left: 1px solid rgba(255,255,255,0.03);
+  position: relative;
+  cursor: pointer;
+  transition: background 0.12s;
+  &:hover { background: rgba(255,255,255,0.025); }
+}
+
+// ── Slot ──────────────────────────────────────────────────────────────────
+.sp-slot {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  right: 3px;
+  border-radius: $radius-sm;
+  padding: 6px 8px;
+  z-index: 2;
+  cursor: default;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+
+  .sp-slot-type {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.7);
+  }
+  .sp-slot-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    line-height: 1.2;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sp-slot-loc {
+    font-size: 10px;
+    color: rgba(255,255,255,0.55);
+  }
+  .sp-slot-del {
+    position: absolute;
+    top: 4px; right: 5px;
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 14px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0;
+    display: none;
+  }
+  &:hover .sp-slot-del { display: block; }
+}
+
+// ── Info row ──────────────────────────────────────────────────────────────
+.sp-info-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 18px;
+}
+
+.sp-info-card {
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: $radius;
+  padding: 22px;
+}
+
+.sp-info-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  color: $text-3;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.sp-info-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: $text-1;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .sp-icon { font-size: 18px; }
+}
+
+.sp-info-accent {
+  font-size: 13px;
+  font-weight: 700;
+  color: $teal;
+  margin: 0 0 8px;
+}
+
+.sp-info-body {
+  font-size: 13px;
+  color: $text-2;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.sp-cta-btn {
+  background: $teal;
+  color: #0f1117;
+  border: none;
+  border-radius: 22px;
+  padding: 9px 18px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.85; }
+}
+
+.sp-info-val {
+  font-size: 42px;
+  font-weight: 800;
+  color: $teal;
+  line-height: 1;
+  margin-bottom: 4px;
+  .sp-info-unit { font-size: 18px; font-weight: 500; margin-left: 2px; }
+}
+
+.sp-prog-bar {
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+.sp-prog-fill {
+  height: 100%;
+  background: $accent;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+.sp-zone-label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: $text-2;
+  margin-bottom: 18px;
+}
+.sp-zone-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  &.green  { background: #4dd9ac; box-shadow: 0 0 6px #4dd9ac80; }
+  &.amber  { background: #f59e0b; box-shadow: 0 0 6px #f59e0b80; }
+  &.red    { background: #f43f5e; box-shadow: 0 0 6px #f43f5e80; }
+}
+
+.sp-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  border-top: 1px solid $border;
+  padding-top: 14px;
+}
+.sp-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sp-legend-dot {
+  width: 10px; height: 10px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+.sp-legend-name {
+  font-size: 12px;
+  color: $text-2;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.sp-legend-cr {
+  font-size: 11px;
+  color: $text-3;
+  font-weight: 600;
+}
+
+// ── Modal ─────────────────────────────────────────────────────────────────
+.sp-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.sp-modal {
+  background: $bg-card;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: $radius;
+  padding: 28px;
+  width: 420px;
+  max-width: 95vw;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+}
+
+.sp-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+.sp-modal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: $text-1;
+}
+.sp-modal-close {
+  background: none;
+  border: none;
+  color: $text-2;
+  font-size: 20px;
+  cursor: pointer;
+  line-height: 1;
+  &:hover { color: $text-1; }
+}
+
+.sp-form-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+.sp-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: $text-2;
+  text-transform: uppercase;
+  margin-bottom: -8px;
+}
+
+.sp-select, .sp-input {
+  width: 100%;
+  background: $bg-card2;
+  border: 1px solid $border;
+  border-radius: $radius-sm;
+  color: $text-1;
+  font-size: 13px;
+  padding: 10px 12px;
+  outline: none;
+  transition: border-color 0.15s;
+  box-sizing: border-box;
+  &:focus { border-color: rgba(198,241,53,0.4); }
+
+  option { background: $bg-card; }
+}
+
+.sp-type-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.sp-type-btn {
+  padding: 6px 14px;
+  background: $bg-card2;
+  border: 1px solid $border;
+  border-radius: 20px;
+  color: $text-2;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+
+  &.active {
+    background: rgba(198,241,53,0.15);
+    border-color: $accent;
+    color: $accent;
+  }
+  &:hover:not(.active) { border-color: $text-3; color: $text-1; }
+}
+
+.sp-modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid $border;
+}
+.sp-modal-cancel {
+  padding: 9px 18px;
+  background: none;
+  border: 1px solid $border;
+  border-radius: 8px;
+  color: $text-2;
+  font-size: 13px;
+  cursor: pointer;
+  &:hover { background: rgba(255,255,255,0.04); }
+}
+.sp-modal-save {
+  padding: 9px 22px;
+  background: $accent;
+  border: none;
+  border-radius: 8px;
+  color: #0f1117;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: opacity 0.2s;
+  &:hover { opacity: 0.88; }
+}
+
+// ── Responsive ────────────────────────────────────────────────────────────
+@media (max-width: 900px) {
+  .planning-root { padding: 20px; }
+  .sp-info-row { grid-template-columns: 1fr; }
+}
