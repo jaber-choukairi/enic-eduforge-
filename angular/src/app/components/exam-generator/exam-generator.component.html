@@ -1,0 +1,204 @@
+<div class="bg-nebula">
+  <div class="nebula-orb orb-1"></div>
+  <div class="nebula-orb orb-2"></div>
+  <div class="nebula-orb orb-3"></div>
+</div>
+
+<div class="nexus-app">
+
+  <!-- ═══════════ UPLOAD STEP ═══════════ -->
+  <ng-container *ngIf="step === 'upload'">
+    <div class="nexus-grid">
+
+      <!-- LEFT: Upload panel -->
+      <div class="glass-panel">
+        <div class="step-badge"><span class="dot"></span> INTELLIGENT EXAM STUDIO</div>
+        <h1>Upload intelligence</h1>
+        <div class="sub">Feed the AI with your documents — it learns patterns, revenue insights, brand signals.</div>
+
+        <label class="ai-dropzone">
+          <input type="file" accept=".pdf,.docx,.txt,.pptx" (change)="onFileUpload($event)" hidden />
+          <div class="drop-icon-svg">
+            <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="drop-label-main">{{ loading ? 'Uploading & vectorizing...' : 'Drop PDF, DOCX, TXT or click' }}</div>
+          <div class="drop-hint">Encrypted · AI ready to analyze product sales &amp; brand metrics</div>
+        </label>
+
+        <div class="material-header">
+          <span class="section-tag">📁 KNOWLEDGE BASE</span>
+          <span style="font-size:0.7rem;color:#7f8fb0">{{ materials.length }} items</span>
+        </div>
+
+        <div *ngIf="materials.length === 0" style="padding:1rem;text-align:center;color:#5f7195;font-size:0.85rem">
+          No documents yet
+        </div>
+
+        <div *ngFor="let mat of materials"
+             class="material-item"
+             [class.selected]="selectedMaterialIds.includes(mat.id)"
+             (click)="toggleMaterial(mat.id)">
+          <div class="mat-icon-sm">📄</div>
+          <div style="flex:1">
+            <div class="mat-title">{{ mat.title }}</div>
+            <div class="mat-badge">{{ mat.chunk_count || 0 }} chunks · {{ mat.status }}</div>
+          </div>
+          <div class="check-indicator" [class.visible]="selectedMaterialIds.includes(mat.id)">✓</div>
+        </div>
+
+        <div style="margin-top:1.5rem;text-align:right">
+          <button class="back-btn"
+                  (click)="step = 'configure'"
+                  [disabled]="!selectedMaterialIds.length"
+                  [style.opacity]="selectedMaterialIds.length ? '1' : '0.4'">
+            → Configure Exam
+          </button>
+        </div>
+      </div>
+
+      <!-- RIGHT: AI Assistant Card -->
+      <div class="ai-assistant-card">
+        <div class="assistant-glow"></div>
+        <div class="ai-orb">
+          <svg viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round" fill="none" stroke="white" stroke-width="1.2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M12 6v6l4 2"/>
+            <circle cx="12" cy="12" r="2" fill="white"/>
+          </svg>
+        </div>
+        <div class="ai-title">AI ASSISTANT</div>
+        <div class="ai-desc">
+          <strong>Try Now</strong> — Analyze product sales over last year.
+          Compare revenue, quality, sales and brand performance using your uploaded material.
+        </div>
+        <div class="ai-stats">
+          <div class="stat-block">
+            <div class="stat-num">4D</div>
+            <div class="stat-label">Analysis</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num">KPI</div>
+            <div class="stat-label">Brand IQ</div>
+          </div>
+          <div class="stat-block">
+            <div class="stat-num">AI</div>
+            <div class="stat-label">Cognitive</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ═══════════ CONFIGURE STEP ═══════════ -->
+  <ng-container *ngIf="step === 'configure'">
+    <div class="nexus-grid">
+
+      <!-- LEFT: Config panel -->
+      <div class="glass-panel">
+        <div class="flex-between" style="margin-bottom:1.5rem">
+          <div>
+            <div class="step-badge"><span class="dot"></span> STEP 2 — CUSTOMIZE</div>
+            <h1>Exam blueprint</h1>
+            <div class="sub">Configure question types &amp; focus on revenue/brand analysis</div>
+          </div>
+          <button class="back-btn" (click)="step = 'upload'">← Back</button>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Exam Title *</label>
+          <input [(ngModel)]="examTitle" class="nexus-input" placeholder="e.g. Q4 Sales & Brand Analysis" />
+        </div>
+        <div class="input-group">
+          <label class="input-label">Topic / Focus (AI will drill)</label>
+          <input [(ngModel)]="examTopic" class="nexus-input" placeholder="Compare revenue, quality, sales, brand" />
+        </div>
+
+        <div class="section-tag" style="margin-top:1rem;margin-bottom:0.5rem">⚙️ QUESTION MIX</div>
+
+        <div class="q-row-list">
+          <div *ngFor="let cfg of questionConfigs; let i = index" class="q-row">
+            <span class="q-num">{{ i + 1 }}</span>
+            <select [(ngModel)]="cfg.question_type" class="q-select">
+              <option value="multiple_choice">Multiple Choice</option>
+              <option value="true_false">True / False</option>
+              <option value="short_answer">Short Answer</option>
+              <option value="essay">Essay</option>
+              <option value="fill_blank">Fill in Blank</option>
+            </select>
+            <input type="number" [(ngModel)]="cfg.count" min="1" max="20" class="q-count-input" />
+            <select [(ngModel)]="cfg.difficulty" class="q-diff-select">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+        </div>
+
+        <button class="btn-add-type" (click)="addQuestionType()">+ Add question category</button>
+
+        <button class="gen-cta" (click)="generate()" [disabled]="!examTitle || !selectedMaterialIds.length">
+          <span>✨</span> Generate AI Exam <span>→</span>
+        </button>
+      </div>
+
+      <!-- RIGHT: AI Card (configure state) -->
+      <div class="ai-assistant-card">
+        <div class="assistant-glow"></div>
+        <div class="ai-orb ai-orb--ready">
+          <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.2">
+            <path d="M9 12h6m-3-3v6m-7 5h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div class="ai-title">READY TO ANALYZE</div>
+        <div class="ai-desc">
+          <strong>Try Now</strong> — Compare revenue, quality, sales and brand metrics.
+          Our engine will generate contextual exam questions based on uploaded assets.
+        </div>
+      </div>
+
+    </div>
+  </ng-container>
+
+  <!-- ═══════════ GENERATING STEP ═══════════ -->
+  <ng-container *ngIf="step === 'generating'">
+    <div class="glass-panel" style="max-width:700px;margin:0 auto;text-align:center">
+      <div class="gen-state">
+        <div class="pulse-ring">
+          <div class="ring ring1"></div>
+          <div class="ring ring2"></div>
+          <div class="ring ring3"></div>
+          <div class="core-pulse"></div>
+        </div>
+        <h3 style="margin-top:1.5rem;font-size:1.2rem;font-weight:700">AI synthesizing exam content</h3>
+        <p style="color:#a0b2df;margin-top:0.5rem">Analyzing revenue, brand signals, quality metrics …</p>
+        <div style="margin-top:1rem;color:#6c86c0">⚡ comparing sales performance</div>
+      </div>
+    </div>
+  </ng-container>
+
+  <!-- ═══════════ DONE STEP ═══════════ -->
+  <ng-container *ngIf="step === 'done'">
+    <div class="glass-panel" style="max-width:860px;margin:0 auto">
+      <div class="flex-between">
+        <div>
+          <div class="step-badge"><span class="dot"></span> ✅ EXAM GENERATED</div>
+          <h1>Ready for review</h1>
+        </div>
+        <button class="back-btn" (click)="step = 'upload'">+ New Exam</button>
+      </div>
+      <pre class="preview-box">{{ exportMarkdown }}</pre>
+      <button class="gen-cta" (click)="openFullApp()" style="background:#2d3b6e;box-shadow:none">
+        ⬇️ Open in EduForge ↗
+      </button>
+    </div>
+  </ng-container>
+
+  <!-- ═══════════ ERROR ═══════════ -->
+  <div *ngIf="error" class="error-message">⚠️ {{ error }}</div>
+
+</div>

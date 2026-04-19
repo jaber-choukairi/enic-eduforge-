@@ -1,0 +1,135 @@
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Ressources Pédagogiques</div>
+      <div class="page-sub">Cours, TDs, TPs, examens et documents académiques</div>
+    </div>
+    <div class="header-actions">
+      <select [(ngModel)]="filterType" (change)="applyFilter()" class="filter-select">
+        <option value="">Tous les types</option>
+        <option value="COURS">Cours</option>
+        <option value="TD">TD</option>
+        <option value="TP">TP</option>
+        <option value="EXAM">Examen</option>
+        <option value="OTHER">Autre</option>
+      </select>
+      <button class="btn-primary" (click)="showModal=true">
+        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Soumettre une ressource
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS (professor only) -->
+  <div class="tabs-bar" *ngIf="auth.isProfessor()">
+    <button [class.active]="activeTab==='all'" (click)="activeTab='all'; loadAll()">
+      Toutes les ressources <span class="badge-count">{{ resources.length }}</span>
+    </button>
+    <button [class.active]="activeTab==='pending'" (click)="activeTab='pending'; loadPending()">
+      ⏳ En attente
+      <span class="badge-count" *ngIf="pending.length" style="background:var(--warn);color:#080c14">{{ pending.length }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading"><div class="spinner"></div> Chargement...</div>
+
+  <!-- ALL RESOURCES -->
+  <div *ngIf="!loading && activeTab==='all'">
+    <div *ngIf="!resources.length" class="empty-state" style="text-align:center;padding:60px 0">
+      <div style="font-size:48px;margin-bottom:16px">📚</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">Aucune ressource</div>
+      <div style="color:var(--text2);font-size:14px">Soyez le premier à soumettre une ressource pédagogique.</div>
+    </div>
+    <div *ngFor="let r of resources" class="resource-card">
+      <div class="resource-icon">{{ typeIcon[r.resourceType] || '📄' }}</div>
+      <div class="resource-info">
+        <div class="resource-title">{{ r.title }}</div>
+        <div class="resource-meta">
+          {{ r.subject?.name || 'Sans matière' }} ·
+          {{ r.uploadedBy?.firstName }} {{ r.uploadedBy?.lastName }} ·
+          <span *ngIf="r.fileSizeBytes">{{ (r.fileSizeBytes / 1024 / 1024) | number:'1.1-1' }} MB</span>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;flex-shrink:0">
+        <span class="badge" [ngClass]="statusBadge(r.status)">{{ r.status }}</span>
+        <span style="font-size:12px;color:var(--muted)">⬇ {{ r.downloadCount }}</span>
+        <button class="btn-ghost btn-xs" (click)="download(r)" *ngIf="r.fileUrl">Télécharger</button>
+        <div *ngIf="auth.isProfessor() && r.status === 'PENDING'" style="display:flex;gap:6px">
+          <button class="btn-ghost btn-xs" (click)="approve(r.id)" style="color:var(--success);border-color:var(--success)">✓ Approuver</button>
+          <button class="btn-danger btn-xs" (click)="reject(r.id)">✕ Rejeter</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PENDING RESOURCES (professor) -->
+  <div *ngIf="!loading && activeTab==='pending' && auth.isProfessor()">
+    <div *ngIf="!pending.length" class="empty-state" style="text-align:center;padding:60px 0">
+      <div style="font-size:48px;margin-bottom:16px">✅</div>
+      <div style="font-size:18px;font-weight:700;margin-bottom:8px">Tout est à jour</div>
+      <div style="color:var(--text2);font-size:14px">Aucune ressource en attente de validation.</div>
+    </div>
+    <div *ngFor="let r of pending" class="resource-card">
+      <div class="resource-icon">{{ typeIcon[r.resourceType] || '📄' }}</div>
+      <div class="resource-info">
+        <div class="resource-title">{{ r.title }}</div>
+        <div class="resource-meta">
+          {{ r.subject?.name || 'Sans matière' }} ·
+          Soumis par {{ r.uploadedBy?.firstName }} {{ r.uploadedBy?.lastName }}
+        </div>
+        <div class="resource-meta" *ngIf="r.description" style="margin-top:4px">{{ r.description }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="btn-ghost btn-sm" (click)="approve(r.id)" style="color:var(--success);border-color:rgba(16,185,129,.4)">✓ Approuver</button>
+        <button class="btn-danger btn-sm" (click)="reject(r.id)">✕ Rejeter</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD MODAL -->
+<div class="modal-overlay" *ngIf="showModal" (click)="showModal=false">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-title">📎 Soumettre une ressource</div>
+    <div class="field">
+      <label>Titre</label>
+      <input type="text" [(ngModel)]="form.title" placeholder="Ex: Cours Algorithmique S5"/>
+    </div>
+    <div class="row2">
+      <div class="field">
+        <label>Type</label>
+        <select [(ngModel)]="form.resourceType">
+          <option value="COURS">📚 Cours</option>
+          <option value="TD">📝 TD</option>
+          <option value="TP">🔬 TP</option>
+          <option value="EXAM">📋 Examen</option>
+          <option value="OTHER">📄 Autre</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Matière</label>
+        <select [(ngModel)]="form.subjectId">
+          <option *ngFor="let s of subjects" [value]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+    </div>
+    <div class="field">
+      <label>URL du fichier</label>
+      <input type="url" [(ngModel)]="form.fileUrl" placeholder="https://drive.google.com/..."/>
+    </div>
+    <div class="field">
+      <label>Taille du fichier (octets)</label>
+      <input type="number" [(ngModel)]="form.fileSizeBytes" placeholder="1048576"/>
+    </div>
+    <div class="field">
+      <label>Description (optionnel)</label>
+      <textarea [(ngModel)]="form.description" rows="3" placeholder="Contenu et objectifs..."></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-ghost" (click)="showModal=false">Annuler</button>
+      <button class="btn-primary" (click)="upload()">Soumettre</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" [class.show]="toast" [class.error]="toastType==='error'">{{ toast }}</div>
