@@ -1,0 +1,104 @@
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Étudiants</div>
+      <div class="page-sub">Suivi académique et gestion du risque</div>
+    </div>
+    <div class="header-actions">
+      <select [(ngModel)]="filterSpecialty" (change)="filterBySpecialty()" class="filter-select">
+        <option value="">Toutes les spécialités</option>
+        <option *ngFor="let s of specialties" [value]="s.id">{{ s.name }}</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs-bar">
+    <button [class.active]="activeTab==='all'" (click)="activeTab='all'">
+      Tous les étudiants <span class="badge-count">{{ students.length }}</span>
+    </button>
+    <button [class.active]="activeTab==='risk'" (click)="activeTab='risk'">
+      ⚠️ À risque <span class="badge-count risk" *ngIf="atRisk.length">{{ atRisk.length }}</span>
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading"><div class="spinner"></div> Chargement...</div>
+
+  <!-- ALL STUDENTS -->
+  <div *ngIf="!loading && activeTab==='all'">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Nom</th><th>Spécialité</th><th>Niveau</th><th>Groupe</th>
+            <th>Score risque</th><th>Statut</th><th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of students">
+            <td>
+              <div class="student-name">
+                <div class="mini-avatar">{{ s.user.firstName?.[0] }}{{ s.user.lastName?.[0] }}</div>
+                <span><strong>{{ s.user.firstName }} {{ s.user.lastName }}</strong><br>
+                <small style="color:var(--muted)">{{ s.user.email }}</small></span>
+              </div>
+            </td>
+            <td>{{ s.specialty?.name || '—' }}</td>
+            <td>{{ s.academicLevel }}</td>
+            <td>{{ s.groupName }}</td>
+            <td>
+              <div class="risk-bar-wrap">
+                <div class="risk-bar">
+                  <div class="risk-fill" [style.width.%]="s.riskScore" [style.background]="riskColor(s.riskScore)"></div>
+                </div>
+                <span [style.color]="riskColor(s.riskScore)" style="font-weight:700;font-size:13px">{{ s.riskScore | number:'1.0-0' }}%</span>
+              </div>
+            </td>
+            <td><span class="badge" [ngClass]="riskBadge(s.riskLevel)">{{ s.riskLevel }}</span></td>
+            <td>
+              <button class="btn-ghost btn-xs" (click)="updateRisk(s.id)" title="Recalculer le risque">🔄 Risque</button>
+            </td>
+          </tr>
+          <tr *ngIf="!students.length">
+            <td colspan="7" class="empty-row">Aucun étudiant trouvé</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AT RISK STUDENTS -->
+  <div *ngIf="!loading && activeTab==='risk'">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Nom</th><th>Spécialité</th><th>Niveau</th><th>Score risque</th><th>Statut</th><th>Actions</th></tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let s of atRisk">
+            <td>
+              <div class="student-name">
+                <div class="mini-avatar danger">{{ s.user.firstName?.[0] }}{{ s.user.lastName?.[0] }}</div>
+                <strong>{{ s.user.firstName }} {{ s.user.lastName }}</strong>
+              </div>
+            </td>
+            <td>{{ s.specialty?.name || '—' }}</td>
+            <td>{{ s.academicLevel }}</td>
+            <td>
+              <span [style.color]="riskColor(s.riskScore)" style="font-weight:800;font-size:16px">
+                {{ s.riskScore | number:'1.0-0' }}%
+              </span>
+            </td>
+            <td><span class="badge" [ngClass]="riskBadge(s.riskLevel)">{{ s.riskLevel }}</span></td>
+            <td><button class="btn-ghost btn-xs" (click)="updateRisk(s.id)">🔄 Recalculer</button></td>
+          </tr>
+          <tr *ngIf="!atRisk.length">
+            <td colspan="6" class="empty-row">✅ Aucun étudiant à risque élevé</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="toast" [class.show]="toast" [class.error]="toastType==='error'">{{ toast }}</div>
+</div>

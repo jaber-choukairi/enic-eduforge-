@@ -1,0 +1,180 @@
+<div class="page-wrap">
+  <div class="page-header">
+    <div>
+      <div class="page-title">{{ auth.isStudent() ? 'Mes Notes' : 'Gestion des Notes' }}</div>
+      <div class="page-sub">{{ auth.isStudent() ? 'Historique complet de vos évaluations' : 'CC · Examens · Commentaires' }}</div>
+    </div>
+    <button class="btn-primary" (click)="showModal=true" *ngIf="auth.isProfessor()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      + Publier notes
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading"><div class="spinner"></div> Chargement...</div>
+
+  <!-- ══ STUDENT VIEW ══ -->
+  <div *ngIf="auth.isStudent() && !loading">
+    <div class="cards-grid" *ngIf="grades.length">
+      <div class="stat-card">
+        <div class="stat-label">Moyenne générale</div>
+        <div class="stat-value" [ngClass]="avg >= 14 ? 'green' : avg >= 10 ? 'yellow' : 'red'">
+          {{ avg | number:'1.2-2' }}<small style="font-size:14px;font-weight:500;opacity:.6">/20</small>
+        </div>
+        <div class="stat-icon">📊</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Évaluations totales</div>
+        <div class="stat-value">{{ grades.length }}</div>
+        <div class="stat-icon">📋</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Meilleure note</div>
+        <div class="stat-value green">{{ best | number:'1.2-2' }}<small style="font-size:14px;font-weight:500;opacity:.6">/20</small></div>
+        <div class="stat-icon">🏆</div>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Matière</th><th>Type</th><th>Note /20</th><th>Commentaire</th><th>Année</th></tr></thead>
+        <tbody>
+          <tr *ngFor="let g of grades">
+            <td><strong>{{ g.subject?.name || '—' }}</strong></td>
+            <td><span class="badge" [ngClass]="g.gradeType === 'EXAM' ? 'badge-exam' : 'badge-cc'">{{ g.gradeType }}</span></td>
+            <td><span class="grade-pill" [style.color]="gradeColor(g.gradeValue)">{{ g.gradeValue | number:'1.2-2' }}<small style="font-size:12px;opacity:.6">/20</small></span></td>
+            <td style="color:var(--text2)">{{ g.comment || '—' }}</td>
+            <td style="color:var(--muted);font-size:12px">{{ g.academicYear }}</td>
+          </tr>
+          <tr *ngIf="!grades.length"><td colspan="5" class="empty-row">Aucune note disponible</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══ PROFESSOR VIEW ══ -->
+  <div *ngIf="auth.isProfessor() && !loading">
+
+    <!-- TABS -->
+    <div class="tabs-bar">
+      <button [class.active]="activeTab==='CC'" (click)="activeTab='CC'">Notes CC</button>
+      <button [class.active]="activeTab==='EXAM'" (click)="activeTab='EXAM'">Notes Examen</button>
+    </div>
+
+    <!-- CC TABLE -->
+    <div *ngIf="activeTab==='CC'">
+      <div *ngFor="let sub of subjects">
+        <div class="section-title">Contrôles Continus — {{ sub.name }}</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ÉTUDIANT</th>
+                <th>CC1</th><th>CC2</th><th>CC3</th>
+                <th>INDICATEUR</th>
+                <th>COMMENTAIRE</th>
+                <th>ACTION</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of gradesByStudent">
+                <td><strong>{{ row.student.user.firstName }} {{ row.student.user.lastName }}</strong></td>
+                <td>
+                  <span *ngIf="getCC(row.cc, 'CC1') as g; else dash" [style.color]="gradeColor(g.gradeValue)">{{ g.gradeValue }}</span>
+                  <ng-template #dash>—</ng-template>
+                </td>
+                <td>
+                  <span *ngIf="getCC(row.cc, 'CC2') as g; else dash2" [style.color]="gradeColor(g.gradeValue)">{{ g.gradeValue }}</span>
+                  <ng-template #dash2>—</ng-template>
+                </td>
+                <td>
+                  <span *ngIf="getCC(row.cc, 'CC3') as g; else dash3" [style.color]="gradeColor(g.gradeValue)">{{ g.gradeValue }}</span>
+                  <ng-template #dash3>—</ng-template>
+                </td>
+                <td>
+                  <span class="ind-badge" [ngClass]="indicatorClass(indicator(row.cc))">{{ indicator(row.cc) }}</span>
+                </td>
+                <td style="color:var(--text2);font-size:13px">{{ lastComment(row.cc) }}</td>
+                <td>
+                  <button class="btn-ghost btn-xs" (click)="openEdit(row.student, sub)">Modifier</button>
+                </td>
+              </tr>
+              <tr *ngIf="!gradesByStudent.length"><td colspan="7" class="empty-row">Aucun étudiant</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- EXAM TABLE -->
+    <div *ngIf="activeTab==='EXAM'">
+      <div *ngFor="let sub of subjects">
+        <div class="section-title">Examens — {{ sub.name }}</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>ÉTUDIANT</th><th>NOTE EXAM</th><th>COMMENTAIRE</th><th>ACTION</th></tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let row of gradesByStudent">
+                <td><strong>{{ row.student.user.firstName }} {{ row.student.user.lastName }}</strong></td>
+                <td>
+                  <span *ngIf="getCC(row.exam, 'EXAM') as g; else nodash" [style.color]="gradeColor(g.gradeValue)" style="font-weight:700;font-size:15px">{{ g.gradeValue }}<small>/20</small></span>
+                  <ng-template #nodash><span style="color:var(--muted)">—</span></ng-template>
+                </td>
+                <td style="color:var(--text2);font-size:13px">{{ lastComment(row.exam) }}</td>
+                <td><button class="btn-ghost btn-xs" (click)="openEdit(row.student, sub, 'EXAM')">Modifier</button></td>
+              </tr>
+              <tr *ngIf="!gradesByStudent.length"><td colspan="4" class="empty-row">Aucun étudiant</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ MODAL ══ -->
+  <div class="modal-overlay" *ngIf="showModal" (click)="showModal=false">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-title">📝 Publier une Note</div>
+      <div class="field">
+        <label>Étudiant</label>
+        <select [(ngModel)]="form.studentId">
+          <option [value]="0" disabled>Sélectionner un étudiant</option>
+          <option *ngFor="let s of students" [value]="s.id">{{ s.user.firstName }} {{ s.user.lastName }}</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Matière</label>
+        <select [(ngModel)]="form.subjectId">
+          <option *ngFor="let s of subjects" [value]="s.id">{{ s.name }}</option>
+        </select>
+      </div>
+      <div class="row2">
+        <div class="field">
+          <label>Type</label>
+          <select [(ngModel)]="form.gradeType">
+            <option value="CC1">CC1</option><option value="CC2">CC2</option>
+            <option value="CC3">CC3</option><option value="EXAM">Examen Final</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Note /20</label>
+          <input type="number" [(ngModel)]="form.gradeValue" step="0.25" min="0" max="20" placeholder="14.5"/>
+        </div>
+      </div>
+      <div class="field">
+        <label>Année académique</label>
+        <input type="text" [(ngModel)]="form.academicYear" placeholder="2024-2025"/>
+      </div>
+      <div class="field">
+        <label>Commentaire</label>
+        <textarea [(ngModel)]="form.comment" rows="3" placeholder="Bon travail..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-ghost" (click)="showModal=false">Annuler</button>
+        <button class="btn-primary" (click)="publish()">Publier</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" [class.show]="toast" [class.error]="toastType==='error'">{{ toast }}</div>
+</div>
